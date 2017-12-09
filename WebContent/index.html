@@ -1,0 +1,2704 @@
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>Front</title>
+
+
+
+		<link rel="stylesheet" href="bootstrap.css">
+		<link rel="stylesheet" href="styles.css">
+		<script src="jquery-1.12.2.js"></script>
+		<script src="jquery.csv.js"></script>
+		<script src="mxClient.js"></script>
+		<script src="rdflib.js"></script>
+		<script src="bootstrap.js"></script>
+		<script src="ace.js" type="text/javascript" charset="utf-8"></script>
+		
+		<script>
+
+		
+		</script>
+
+
+	</head>
+
+	<body>
+	<div class="container">
+	<div class="row">
+		<div class="col-md-5">
+		<h2 align="center">Ontology Graph</h2>
+			<div id="graphContainer1"
+				style="position:relative;width:490px;min-height:500px;background:url('grid.gif');cursor:default;">
+			</div>
+
+		</div>
+  		<div class="col-md-5">
+			<h2 align="center">Input File Graph</h2>
+			<div class="v-separator"></div>
+			<div id="graphContainer2"
+				style="position:relative;width:500px;min-height:500px;background:url('grid.gif');cursor:default;">
+			</div>
+			
+		</div>
+		<div class="col-md-2">
+			<h2 align="center">Toolbox</h2>
+			<div class="boxed">
+			<div id="inputs" >
+				<label class="btn btn-primary btn-file">
+					  <input type="file" id="input2" name="files2[]" style="display: none;" />
+					  Browse Ontology
+				</label>
+				<br/>
+				<br/>
+				<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#connectModal">Connect to Datasource</button>
+			</div>
+			<br/>
+			<!--<button onclick="myFunction()">I'm Feeling Lucky</button>-->
+			
+			<button type="button" class="btn btn-default" id="luckyButton" data-loading-text="<i class='glyphicon glyphicon-refresh glyphicon-refresh-animate'></i> Please Wait...">I'm Feeling Lucky</button>
+			<br/>
+			<br/>
+			<button type="button" class="btn btn-default" id="currentMapping" >Show Current Mapping</button>
+			<br/>
+			<br/>
+			<button type="button" class="btn btn-warning" id="resetMapping">Reset Saved Mapping</button>
+			<br/>
+			<br/>
+			<button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#modalSettings">Settings</button>
+			<br/>
+			<br/>
+			<div class="alert alert-danger" style="display: none" id="errorAlert">
+				 <a class="close" onclick="$('#errorAlert').hide()">×</a> 
+				<strong>Failed</strong> to parse Ontology. Only Turtle, N-Triples, N3 and RDF/XML formats allowed. Files must have the right extension.
+			</div>
+			</div>
+		</div>
+
+
+	</div>
+</div> <!--container-->
+
+<!--Modal-->
+<div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog modal-lg">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h3>Configuration Panel</h3>
+          
+        </div>
+        <div class="modal-body">
+
+          <p id="demo"></p>
+        </div>
+        <div class="modal-footer">
+        	
+        	<div style="float:left; line-height: 34px;">
+        	<p id="distName">*Distance Function is Levenshtein</p>
+        	</div>
+
+        	<button type="button" class="btn btn-primary" data-toggle="modal" onclick="putMappingToEditor();">Next</button>
+
+          	<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+ 
+
+
+  
+  <div class="modal fade" id="modalSettings" role="dialog">
+    <div class="modal-dialog">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+        	<button type="button" class="close" data-dismiss="modal">&times;</button>
+          	<h3>Settings</h3>	
+        </div>
+        <div class="modal-body">
+
+ 		  <div class="form-group" >
+			  <label for="sel1">Select distance function:</label>
+			  <select class="form-control" id="sel1" onchange="changeMetric(this);" autocomplete="off">
+			    <option value="Levenshtein" selected>Levenshtein distance</option>
+			    <option value="Damerau">Damerau–Levenshtein distance</option>
+			  </select>
+		</div>
+
+	     <div class="form-group" >
+	     <label for="selectFunctForm">Select called function:</label>
+		    <form id="selectFunctForm">
+			    <div class="form-check">
+				  <label class="form-check-label">
+				    <input class="form-check-input" type="radio" name="radioSelectFunct" id="radioSelectFunct1" value="radioSelectFunct1" checked>
+				    Optimal algorithm
+				  </label>
+				</div>
+				<div class="form-check">
+				  <label class="form-check-label">
+				    <input class="form-check-input" type="radio" name="radioSelectFunct" id="radioSelectFunct2" value="radioSelectFunct2">
+				    Greedy algorithm
+				  </label>
+				</div>
+			</form>
+		</div>
+          
+
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  	<div class="modal fade" id="modalMapping" role="dialog">
+    <div class="modal-dialog modal-lg">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h3>Mapping</h3>
+          
+        </div>
+        <div class="modal-body">
+
+		  <pre id="editor">
+		  </pre>
+
+
+        </div>
+        <div class="modal-footer">
+        	<div style="float:left;">
+        	<div class="alert alert-danger" style="display: none" id="d2RdfError">
+				<a class="close" onclick="$('#d2RdfError').hide()">×</a> 
+				<strong>Failed</strong> to dump to rdf.
+			</div>
+        	
+		    	<div class="panel-group">
+					<div class="panel panel-default">
+					    <div class="panel-heading">
+					      <h4 class="panel-title">
+					        <a data-toggle="collapse" href="#collapseRdfProp">Click for Settings</a>
+					      </h4>
+					    </div>
+					    <div id="collapseRdfProp" class="panel-collapse collapse">
+					      <div class="panel-body">
+
+					      	<div class="row">
+					      	<div class="col-md-6">
+						      	<form role="form" id="dump2RdfForm">
+							      	<div class="sett2">
+										<div class="form-group">
+											     <label for="radioSelectRdfFormat">Select RDF format:</label>
+												    
+													    <div class="form-check">
+														  <label class="form-check-label">
+														    <input class="form-check-input" type="radio" name="radioSelectRdfFormat" id="rdSelRdfForTurtle" value="turtle" checked>
+														    Turtle
+														  </label>
+														</div>
+														<div class="form-check">
+														  <label class="form-check-label">
+														    <input class="form-check-input" type="radio" name="radioSelectRdfFormat" id="rdSelRdfForNtriples" value="ntriples">
+														    N-Triples
+														  </label>
+														</div>
+														<div class="form-check">
+														  <label class="form-check-label">
+														    <input class="form-check-input" type="radio" name="radioSelectRdfFormat" id="rdSelRdfForTurtleN3" value="n3">
+														    N3
+														  </label>
+														</div>
+														<div class="form-check">
+														  <label class="form-check-label">
+														    <input class="form-check-input" type="radio" name="radioSelectRdfFormat" id="rdSelRdfForTurtleXml" value="rdfXml">
+														    RDF/XML
+														  </label>
+														</div>
+													
+												</div>
+											
+
+											
+											<!-- epsg Selection-->
+											    <div class="form-group">
+											      <label for="epsgCode">Epsg:</label>
+											      <input type="text" class="form-control" id="epsgCode" name="epsgCode" placeholder="e.g., 4326">
+										    	</div>
+
+
+										    
+										    <!-- Filename Selection-->
+											    <div class="form-group">
+											      <label for="DumpRdfFilename">Enter rdf output Filename:</label>
+											      <input type="text" class="form-control" id="DumpRdfFilename" name="DumpRdfFilename">
+										    	</div>
+									</div>
+								</form>   
+							</div>
+
+							<div class="col-md-6">
+								<form role="form" id="save">
+							      	<div class="sett2">
+
+										    <!-- Filename Selection-->
+										<div class="form-group">
+											<label for="saveRmlFilename">Enter RML/R2RML output Filename:</label>
+												<input type="text" class="form-control" id="saveRmlFilename" name="saveRmlFilename">
+										</div>
+									</div>
+								</form> 
+							</div>
+
+							</div>
+							
+						    
+
+
+
+					      </div>
+					     <!-- <div class="panel-footer">Panel Footer</div> -->
+					    </div>
+					</div>
+
+				</div>
+				
+
+			</div>
+			
+        	<button type="button" class="btn btn-primary" id="dumpToRdfButton" data-loading-text="<i class='glyphicon glyphicon-refresh glyphicon-refresh-animate'></i> Processing...">Dump to RDF</button>
+        	<button type="button" class="btn btn-primary" onclick="saveTextAsFile(ace.edit('editor').getValue(), $('input[name=saveRmlFilename]').val())">Save to file</button>
+          	<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <div class="modal fade" id="connectModal" role="dialog">
+    <div class="modal-dialog">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+        	<button type="button" class="close" data-dismiss="modal">&times;</button>
+          	<h3>Connect to DataSource</h3>	
+        </div>
+        <div class="modal-body">
+        	<h4>From Input file</h4>
+        	<br>
+       		<form class="form-inline" role="form">
+			  	<div class="form-group">
+					<label for="filePath">Path to file:</label>
+					<input type="text" class="form-control" id="filePath" readonly>
+				</div>
+			 
+			  	<label class="btn btn-primary btn-file">
+					<input type="file" id="inputDatasource" name="files[]" style="display: none;"/>
+					Open File
+				</label>
+				<button type="button" class="btn btn-success" id="connectToDs" >OK!</button>
+			 
+			</form>
+
+			
+			<div class='or-separator'><span>or</span></div>
+
+			<h4>Connect to Database</h4>
+			
+			<div class="alert alert-danger" style="display: none" id="connectToDbError">
+				 <a class="close" onclick="$('#connectToDbError').hide()">×</a> 
+				<strong>Failed</strong> to connect.
+			</div>
+			
+			<br>
+			<form role="form" id="dbform">
+	            <div class="form-group">
+	             	<label for="connectUsrname">Username</label>
+	             	<input type="text" class="form-control" id="connectUsrname" name="connectUsrname" placeholder="Enter username">
+	            </div>
+	            <div class="form-group">
+	              <label for="connectPsw">Password</label>
+	              <input type="password" class="form-control" id="connectPsw" name="connectPsw" placeholder="Enter password">
+	            </div>
+	             <div class="form-group">
+	              <label for="connectHost">Host</label>
+	              <input type="text" class="form-control" id="connectHost" name="connectHost" placeholder="Enter host">
+	            </div>
+	            <div class="form-group">
+	              <label for="connectPort">Port</label>
+	              <input type="text" class="form-control" id="connectPort" name="connectPort" placeholder="Enter port">
+	            </div>
+	            <div class="form-group">
+	              <label for="connectEngine">Engine</label>
+	              <input type="text" class="form-control" id="connectEngine" name="connectEngine" placeholder="Enter engine (e.g., mysql, postgresql)">
+	            </div>
+	            <div class="form-group">
+	              <label for="connectDbName">Database Name</label>
+	              <input type="text" class="form-control" id="connectDbName" name="connectDbName" placeholder="Enter database name">
+	            </div>
+	            <button type="button" class="btn btn-success btn-block" id="connectToDb" >Connect</button>
+	            
+          </form>
+			
+          
+        </div>
+        <div class="modal-footer">
+          	<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+
+   <div class="modal fade" id="confirmReset" role="dialog">
+    <div class="modal-dialog modal-sm">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Confirm</h4>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure?</p>
+        </div>
+        <div class="modal-footer">
+        	<button type="button" class="btn btn-primary" id="confirmYes" >Yes</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <div id="uploadZipModal" class="modal fade" role="dialog">
+	  <div class="modal-dialog">
+
+	    <!-- Modal content-->
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <button type="button" class="close" data-dismiss="modal">&times;</button>
+	        <h4 class="modal-title">Upload Zip</h4>
+	      </div>
+	      <div class="modal-body">
+	    	<p><strong>Upload a zip with all the shapefile files</strong></p>
+
+	        <!-- zip for shp-->
+			<form id="uploadZip" action="Upload" method="post" enctype="multipart/form-data">
+			
+				<label class="btn btn-primary btn-file">
+					<input type="file" id="upZip" name="upZip" style="display: none;" />
+						Browse zip
+				</label>
+				<br />
+				<br />
+				<button type="button"  class="btn btn-success" id="uploadZipButtonAjax" data-loading-text="<i class='glyphicon glyphicon-refresh glyphicon-refresh-animate'></i> Processing...">Upload Zip and Dump to rdf</button>
+
+			</form>
+			<div class="alert alert-danger" style="display: none" id="UploadZipError">
+				 <a class="close" onclick="$('#UploadZipError').hide()">×</a> 
+				<strong>Failed</strong> to unzip.
+			</div>
+
+			<div class="alert alert-success" style="display: none" id="UploadZipSuccess">
+				 <a class="close" onclick="$('#UploadZipSuccess').hide()">×</a> 
+				<strong>Success</strong> upload! The output file is processing.
+			</div>
+
+			<div class="alert alert-danger" style="display: none" id="d2RdfShpError">
+				<a class="close" onclick="$('#d2RdfShpError').hide()">×</a> 
+				<strong>Failed</strong> to dump to rdf.
+			</div>
+			
+			
+	        
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+	      </div>
+	    </div>
+
+	  </div>
+	</div>
+
+
+
+	<script>
+		function mxIconSet(state)
+		{
+			this.images = [];
+			var graph = state.view.graph;
+			
+			// Icon1
+			
+			
+			// Delete
+			var img = mxUtils.createImage('16pxRed.png');
+			img.setAttribute('title', 'Drag and Drop');
+			img.style.position = 'absolute';
+			img.style.cursor = 'pointer';
+			img.style.width = '16px';
+			img.style.height = '16px';
+			img.style.left = (state.x + state.width/2)-8;
+			img.style.top = (state.y + state.height/2)-8;
+			
+			mxEvent.addGestureListeners(img,
+				mxUtils.bind(this, function(evt)
+				{
+					// Disables dragging the image
+					//mxEvent.consume(evt);
+				})
+			);
+			
+			
+			state.view.graph.container.appendChild(img);
+
+			var dragElt = document.createElement('div');
+			dragElt.style.border = 'dashed black 1px';
+			dragElt.style.width = '80px';
+			dragElt.style.height = '30px';
+
+			var ds = mxUtils.makeDraggable(img, graphF, dndFunction, dragElt, null, null, graph.autoscroll, true);
+			
+			//if(graph.isMouseDown!=true){
+			//		dragSource = graph.getCellAt(state.x, state.y);
+			//}
+			$(img).mousedown(function(){
+			 	console.log("CLICK IT")
+			 	dragSource = graph.getCellAt(state.x, state.y);
+			});
+
+			//console.log(graph.getCellAt(state.x, state.y));
+
+
+				// Redirects feature to global switch. Note that this feature should only be used
+				// if the the x and y arguments are used in funct to insert the cell.
+				ds.isGuidesEnabled = function()
+				{
+					return graph.graphHandler.guidesEnabled;
+				};
+			
+
+			this.images.push(img);
+		};
+
+
+		var graphF = function(evt)
+		{
+					var x = mxEvent.getClientX(evt);
+					var y = mxEvent.getClientY(evt);
+					var elt = document.elementFromPoint(x, y);
+					//console.log(elt.parentNode.id);
+
+						if (elt.parentNode.id == "graphContainer1")
+						{
+							return graphOntology;
+						}
+						else if(elt.parentNode.id == "graphContainer2")
+						{
+							return graphCsv;
+						}
+						//else{console.log("neither", x, y, elt)}
+
+					
+					
+					return null;
+		};
+
+
+		var dnDFunctCalls = 0;
+		var DnDModalCont = ""; //global 
+
+
+	var dndFunction = function(graph, evt, target, x, y){
+		if($('input[name=radioSelectFunct]:checked', '#selectFunctForm').val()=="radioSelectFunct1"){
+			console.log("funct2")
+			funct2 (graph, evt, target, x, y);
+
+		}
+		else if($('input[name=radioSelectFunct]:checked', '#selectFunctForm').val()=="radioSelectFunct2"){
+			console.log("funct")
+			funct(graph, evt, target, x, y);
+		}
+	}
+
+
+
+		var funct = function(graph, evt, target, x, y)
+				{
+					
+					
+					var cello = graph.getCellAt(x,y);
+
+					
+					var edges = graph.getConnections(cello);
+					//console.log(edges[0].target.value);
+					var children = [];
+					for (var i = 0; i < edges.length; i++) {
+						children[i] = edges[i].target.value;
+					}
+
+					var sourceEdges = graph.getConnections(dragSource);
+					var sourceChildren = [];
+					for (i = 0; i < sourceEdges.length; i++) {
+						sourceChildren[i] = sourceEdges[i].target.value;
+					}
+
+					//console.log("dragSource = ", dragSource);
+					//console.log("CHILDREN Source = "+sourceChildren);
+					//console.log("CHILDREN = "+children);
+
+					var x = mxEvent.getClientX(evt);
+					var y = mxEvent.getClientY(evt);
+					var elt = document.elementFromPoint(x, y);
+					console.log(elt.parentNode.id);
+
+					if (elt.parentNode.id == "graphContainer1"){
+						var inputFileParent = dragSource.value;
+						//inputFileParents.push(dragSource.value);
+						//console.log("PARENTS = ", inputFileParents);
+					}
+					else{
+						//console.log(edges[0].source.value);
+						var inputFileParent = edges[0].source.value;
+						//inputFileParents.push(edges[0].source.value);
+						//console.log("PARENTS = ", inputFileParents);
+					}
+
+					var minDist = [];
+					var minDistStr = [];
+					var allDistances = [];
+					for (i = 0; i < sourceChildren.length; i++) {
+						minDist[i] = stringMetric(keepAfterHash(sourceChildren[i]),keepAfterHash(children[0]) );
+						minDistStr[i] = []; 
+						minDistStr[i]= children[0];
+						for (var j = 0; j < children.length; j++) {
+							if(minDist[i] >= stringMetric(keepAfterHash(sourceChildren[i]),keepAfterHash(children[j]) )){
+								minDist[i] = stringMetric(keepAfterHash(sourceChildren[i]),keepAfterHash(children[j]) );
+								minDistStr[i] = children[j];
+							}
+							if (elt.parentNode.id == "graphContainer1"){
+								allDistances.push({ontName:children[j], dsName:sourceChildren[i], distance:stringMetric(keepAfterHash(sourceChildren[i]),keepAfterHash(children[j]))});
+
+							}
+							else if(elt.parentNode.id == "graphContainer2"){
+								allDistances.push({ontName:sourceChildren[i], dsName:children[j], distance:stringMetric(keepAfterHash(sourceChildren[i]),keepAfterHash(children[j]))});
+
+							}
+							//console.log(sourceChildren[i] +" and "+ children[j]+" has editDistance = "+ levenshteinDistance(sourceChildren[i],children[j] ));
+						}
+						//console.log("MIN = "+minDist[i]+" str = "+minDistStr[i])
+						//console.log(sourceChildren[i] +" and "+ minDistStr[i]+" has minEditDistance = "+ minDist);
+					}
+					//console.log("ALL  = ", allDistances)
+					
+					allDistances.sort(function(a, b){
+    					return a.distance - b.distance;
+					});
+					
+					//console.log("ALL  = ", allDistances)
+
+					var finalMapping = [];
+					var visitedNodes = [];
+
+					for (var i = 0; i < allDistances.length; i++) {
+						if(visitedNodes.indexOf(allDistances[i].dsName)==-1 && visitedNodes.indexOf(allDistances[i].ontName)==-1){
+							finalMapping.push(allDistances[i])
+							visitedNodes.push(allDistances[i].dsName, allDistances[i].ontName) 
+						}
+					}
+
+					console.log("FINAL = ", finalMapping)
+
+					//$("#myModal").modal();
+
+					
+					dnDFunctCalls+=1;
+
+					var modalMappingTableCont = "<table class='table table-bordered'>"+
+								    "<thead>"+
+								      "<tr>"+
+								        "<th>Ontology Property</th>"+
+								        "<th>Mapped to</th>"+
+								        "<th>Score*</th>"+
+								         "<th>Check</th>"+
+								      "</tr>"+
+								    "</thead>"+
+								    "<tbody>"
+					
+					
+
+					
+					for (i = 0; i < finalMapping.length; i++) {
+						modalMappingTableCont+= "<tr>"+"<td>"+finalMapping[i].ontName+"</td>"+ "<td>"+finalMapping[i].dsName+
+																									/*"<table class='table'>"+
+																									    "<thead>"+
+																									      "<tr>"+
+																									        "<th>Name</th>"+
+																									        "<th>Type</th>"+
+																									      "</tr>"+
+																									    "</thead>"+
+																									    "<tbody>"+
+																									      "<tr>"+
+																									        "<td>"+finalMapping[i].dsName+"</td>"+
+																											"<td>Sting</td>"+
+																									      "</tr>"+
+																									    "</tbody>"+
+																									  "</table>"+	*/
+
+
+						"</td>"+"<td>"+finalMapping[i].distance+"</td>" +"<td>"+" <input type='checkbox' id = 'checkMatch"+i+"'  onchange='handleCheckboxChange(this, \""+finalMapping[i].dsName+"\", \""+finalMapping[i].ontName+"\", \""+inputFileParent+"\")'>"+"</td>" + "</tr>"
+					}
+					
+
+
+					
+
+					modalMappingTableCont+="</tbody> </table><hr>"
+
+					DnDModalCont += "<div class='panel-group'>"+
+									    "<div class='panel panel-default'>"+
+									      "<div class='panel-heading'>"+
+									        "<h4 class='panel-title'>"+
+									          "<a data-toggle='collapse' href='#collapse"+dnDFunctCalls+"'><strong>Source:</strong> "+dragSource.value+"<br/><strong>Drop to:</strong> "+cello.value+"</a>"+
+									        "</h4>"+
+									      "</div>"+
+									      "<div id='collapse"+dnDFunctCalls+"' class='panel-collapse collapse'>"+
+									        "<div class='panel-body'>"+modalMappingTableCont+"</div>"+
+									        //"<div class='panel-footer'><button type='button' class='btn btn-primary btn-sm'>Show more options</button></div>"+
+									      "</div>"+
+									    "</div>"; 
+   					 
+
+
+					//DnDModalCont += "<strong>Source:</strong> "+sourceFilename+"<br><br>"+"<strong>Properties</strong>"
+
+					
+
+					mappings = []; 
+					inputFileParents = [];
+
+					document.getElementById("demo").innerHTML = DnDModalCont;
+					//document.getElementById("demo").innerHTML = 5 + 5;
+					$("#myModal").modal();
+
+
+	
+		};
+
+
+
+		var funct2 = function(graph, evt, target, x, y)
+				{
+					
+					//console.log("success"+x+", "+y+cell.value);
+					var cello = graph.getCellAt(x,y);
+
+					var edges = graph.getConnections(cello);
+					var children = [];
+					for (var i = 0; i < edges.length; i++) {
+						children[i] = edges[i].target.value;
+					}
+
+					var sourceEdges = graph.getConnections(dragSource);
+					var sourceChildren = [];
+					for (i = 0; i < sourceEdges.length; i++) {
+						sourceChildren[i] = sourceEdges[i].target.value;
+					}
+
+					console.log("dragSource = ", dragSource);
+					//inputFileParents = [];
+					
+					console.log("CHILDREN Source = "+sourceChildren);
+					console.log("CHILDREN = "+children);
+
+					var x = mxEvent.getClientX(evt);
+					var y = mxEvent.getClientY(evt);
+					var elt = document.elementFromPoint(x, y);
+					console.log(elt.parentNode.id);
+
+					if (elt.parentNode.id == "graphContainer1"){
+						var inputFileParent = dragSource.value;
+						//inputFileParents.push(dragSource.value);	
+					}
+					else{
+						console.log(edges[0].source.value);
+						var inputFileParent = edges[0].source.value;
+						//inputFileParents.push(edges[0].source.value);
+					}
+
+
+					var minDist = [];
+					var minDistStr = [];
+					var allDistances = [];
+					for (i = 0; i < sourceChildren.length; i++) {
+						minDist[i] = stringMetric(keepAfterHash(sourceChildren[i]),keepAfterHash(children[0]) );
+						minDistStr[i] = []; 
+						minDistStr[i]= children[0];
+						for (var j = 0; j < children.length; j++) {
+							if(minDist[i] >= stringMetric(keepAfterHash(sourceChildren[i]),keepAfterHash(children[j]) )){
+								minDist[i] = stringMetric(keepAfterHash(sourceChildren[i]),keepAfterHash(children[j]) );
+								minDistStr[i] = children[j];
+							}
+							if (elt.parentNode.id == "graphContainer1"){
+								allDistances.push({ontName:children[j], dsName:sourceChildren[i], distance:stringMetric(keepAfterHash(sourceChildren[i]),keepAfterHash(children[j]))});
+
+							}
+							else if(elt.parentNode.id == "graphContainer2"){
+								allDistances.push({ontName:sourceChildren[i], dsName:children[j], distance:stringMetric(keepAfterHash(sourceChildren[i]),keepAfterHash(children[j]))});
+
+							}
+							//console.log(sourceChildren[i] +" and "+ children[j]+" has editDistance = "+ levenshteinDistance(sourceChildren[i],children[j] ));
+						}
+						//console.log("MIN = "+minDist[i]+" str = "+minDistStr[i])
+						//console.log(sourceChildren[i] +" and "+ minDistStr[i]+" has minEditDistance = "+ minDist);
+					}
+					//console.log("ALL  = ", allDistances)
+					
+					
+					
+
+					var finalMapping = [];
+					
+					if(sourceChildren.length>children.length){
+						var testResults = permutate.getPermutations(sourceChildren, children.length, sourceChildren, children);
+					}
+					else{
+						var testResults = permutate.getPermutations(children, sourceChildren.length, children, sourceChildren);
+					}
+					//console.log("TEST = ", testResults.permutations);
+					
+					if (elt.parentNode.id == "graphContainer1"){
+						if(sourceChildren.length>children.length){
+							for (i = 0; i < testResults.permutations.length; i++) {
+								finalMapping.push({dsName:testResults.permutations[i].strB, ontName:testResults.permutations[i].strS, distance:testResults.permutations[i].distance});
+							}
+						}
+						else{
+							for (i = 0; i < testResults.permutations.length; i++) {
+								finalMapping.push({dsName:testResults.permutations[i].strS, ontName:testResults.permutations[i].strB, distance:testResults.permutations[i].distance});
+							}
+						}
+					}
+					else if (elt.parentNode.id == "graphContainer2"){
+						if(sourceChildren.length>children.length){
+							for (i = 0; i < testResults.permutations.length; i++) {
+								finalMapping.push({dsName:testResults.permutations[i].strS, ontName:testResults.permutations[i].strB, distance:testResults.permutations[i].distance});
+							}
+						}
+						else{
+							for (i = 0; i < testResults.permutations.length; i++) {
+								finalMapping.push({dsName:testResults.permutations[i].strB, ontName:testResults.permutations[i].strS, distance:testResults.permutations[i].distance});
+							}
+						}
+					}
+					//console.log("FINAL = ", finalMapping)
+
+
+					
+					dnDFunctCalls+=1;
+
+					var modalMappingTableCont = "<table class='table table-bordered'>"+
+								    "<thead>"+
+								      "<tr>"+
+								        "<th>Ontology Property</th>"+
+								        "<th>Mapped to</th>"+
+								        "<th>Score*</th>"+
+								         "<th>Check"+
+								         //"<input type='checkbox' class='check' id='checkAll'>"+
+								         "</th>"+
+								      "</tr>"+
+								    "</thead>"+
+								    "<tbody>"
+					
+					
+
+					
+					for (i = 0; i < finalMapping.length; i++) {
+						modalMappingTableCont+= "<tr>"+"<td>"+finalMapping[i].ontName+"</td>"+ "<td>"+finalMapping[i].dsName+
+																									/*"<table class='table'>"+
+																									    "<thead>"+
+																									      "<tr>"+
+																									        "<th>Name</th>"+
+																									        "<th>Type</th>"+
+																									      "</tr>"+
+																									    "</thead>"+
+																									    "<tbody>"+
+																									      "<tr>"+
+																									        "<td>"+finalMapping[i].dsName+"</td>"+
+																											"<td>Sting</td>"+
+																									      "</tr>"+
+																									    "</tbody>"+
+																									  "</table>"+	*/
+
+
+						"</td>"+"<td>"+finalMapping[i].distance+"</td>" +"<td>"+" <input type='checkbox' id = 'checkMatch"+i+"'  onchange='handleCheckboxChange(this, \""+finalMapping[i].dsName+"\", \""+finalMapping[i].ontName+"\", \""+inputFileParent+"\")'>"+"</td>" + "</tr>"
+					}
+					
+					
+
+					modalMappingTableCont+="</tbody> </table><hr>"
+
+					DnDModalCont += "<div class='panel-group'>"+
+									    "<div class='panel panel-default'>"+
+									      "<div class='panel-heading'>"+
+									        "<h4 class='panel-title'>"+
+									          "<a data-toggle='collapse' href='#collapse"+dnDFunctCalls+"'><strong>Source:</strong> "+dragSource.value+"<br/><strong>Drop to:</strong> "+cello.value+"</a>"+
+									        "</h4>"+
+									      "</div>"+
+									      "<div id='collapse"+dnDFunctCalls+"' class='panel-collapse collapse'>"+
+									        "<div class='panel-body'>"+modalMappingTableCont+"</div>"+
+									        //"<div class='panel-footer'><button type='button' class='btn btn-primary btn-sm'>Show more options</button></div>"+
+									      "</div>"+
+									    "</div>"; 
+   					 
+
+
+					
+
+					mappings = []; //2nd time check
+					inputFileParents = []
+
+					document.getElementById("demo").innerHTML = DnDModalCont;
+					$("#myModal").modal();
+
+
+				
+
+		};
+
+		mxIconSet.prototype.destroy = function()
+		{
+			if (this.images != null)
+			{
+				for (var i = 0; i < this.images.length; i++)
+				{
+					var img = this.images[i];
+					img.parentNode.removeChild(img);
+				}
+			}
+			
+			this.images = null;
+		};
+
+
+
+
+
+		function drawGraph1(container, nodes)
+		{
+			
+
+			// Checks if the browser is supported
+			if (!mxClient.isBrowserSupported())
+			{
+				// Displays an error message if the browser is not supported.
+				mxUtils.error('Browser is not supported!', 200, false);
+			}
+			else
+			{
+				// Disables the built-in context menu
+				mxEvent.disableContextMenu(container);
+
+				// Creates the graph inside the given container
+				graphOntology = new mxGraph(container);
+
+
+				graphOntology.setConnectable(true);
+				
+				// Defines the tolerance before removing the icons
+				var iconTolerance = 20;
+
+				// Shows icons if the mouse is over a cell
+				
+				graphOntology.addMouseListener(
+				{
+				    currentState: null,
+				    currentIconSet: null,
+				    mouseDown: function(sender, me)
+				    {
+				    	// Hides icons on mouse down
+			        	if (this.currentState != null)
+			        	{
+			          		this.dragLeave(me.getEvent(), this.currentState);
+			          		this.currentState = null;
+			        	}
+				    },
+				    mouseMove: function(sender, me)
+				    {
+				    	if (this.currentState != null && (me.getState() == this.currentState ||
+				    		me.getState() == null))
+				    	{
+				    		var tol = iconTolerance;
+				    		var tmp = new mxRectangle(me.getGraphX() - tol,
+				    			me.getGraphY() - tol, 2 * tol, 2 * tol);
+
+				    		if (mxUtils.intersects(tmp, this.currentState))
+				    		{
+				    			return;
+				    		}
+				    	}
+				    	
+						var tmp = graphOntology.view.getState(me.getCell());
+				    	
+				    	// Ignores everything but vertices
+						if (graphOntology.isMouseDown || (tmp != null && !graphOntology.getModel().isVertex(tmp.cell)))
+						{
+							tmp = null;
+						}
+
+				      	if (tmp != this.currentState)
+				      	{
+				        	if (this.currentState != null)
+				        	{
+				          		this.dragLeave(me.getEvent(), this.currentState);
+				        	}
+				        
+			        		this.currentState = tmp;
+				        
+				        	if (this.currentState != null)
+				        	{
+				          		this.dragEnter(me.getEvent(), this.currentState);
+				        	}
+				      	}
+				    },
+				    mouseUp: function(sender, me) { },
+				    dragEnter: function(evt, state)
+				    {
+				    	//console.log('dragEnter', cell.value);
+				    	if (this.currentIconSet == null)
+				    	{
+			    			this.currentIconSet = new mxIconSet(state);
+				    	}
+				    },
+				    dragLeave: function(evt, state)
+				    {
+				    	if (this.currentIconSet != null)
+				    	{
+			    			this.currentIconSet.destroy();
+			    			this.currentIconSet = null;
+				    	}
+				    }
+				});
+
+
+				// Enables rubberband selection
+				new mxRubberband(graphOntology);
+
+				// Gets the default parent for inserting new cells. This
+				// is normally the first child of the root (ie. layer 0).
+				var parent = graphOntology.getDefaultParent();
+
+				// Adds cells to the model in a single step
+				graphOntology.getModel().beginUpdate();
+				try
+				{
+					var v = [];
+					var e = [];
+
+					var nodesDepth = 0;
+					for (var i = 0; i < nodes.length; i++) {
+						v[i] = [];
+						nodesDepth+=(nodes[Math.max(0,i-1)].length-1)*60*(1%(i+1))+20;
+						v[i].push(graphOntology.insertVertex(parent, null, nodes[i][0], 20, nodesDepth, 80, 30, "fillColor=violet"));
+						for (var j = 1; j < nodes[i].length; j++) {
+							v[i].push(graphOntology.insertVertex(parent, null, nodes[i][j], 300, nodesDepth+60*(j-1), 80, 30, "fillColor=cyan")); //Math.max for no negative index
+							//var v2 = graph.insertVertex(parent, null, 'World!', 200, 150, 80, 30);
+							e.push( graphOntology.insertEdge(parent, null, '', v[i][0], v[i][v[i].length-1]));
+						}
+						
+					}
+				}
+				finally
+				{
+					// Updates the display
+					graphOntology.getModel().endUpdate();
+					//graphOntology = graph;
+				}
+			}
+		};
+
+
+
+
+
+
+		function  damerauLevenshteinDistance(source, target) {//https://gist.github.com/IceCreamYou/8396172
+		    if (!source) return target ? target.length : 0;
+		    else if (!target) return source.length;
+
+		    var m = source.length, n = target.length, INF = m+n, score = new Array(m+2), sd = {};
+		    for (var i = 0; i < m+2; i++) score[i] = new Array(n+2);
+		    score[0][0] = INF;
+		    for (var i = 0; i <= m; i++) {
+		        score[i+1][1] = i;
+		        score[i+1][0] = INF;
+		        sd[source[i]] = 0;
+		    }
+		    for (var j = 0; j <= n; j++) {
+		        score[1][j+1] = j;
+		        score[0][j+1] = INF;
+		        sd[target[j]] = 0;
+		    }
+
+		    for (var i = 1; i <= m; i++) {
+		        var DB = 0;
+		        for (var j = 1; j <= n; j++) {
+		            var i1 = sd[target[j-1]],
+		                j1 = DB;
+		            if (source[i-1] === target[j-1]) {
+		                score[i+1][j+1] = score[i][j];
+		                DB = j;
+		            }
+		            else {
+		                score[i+1][j+1] = Math.min(score[i][j], Math.min(score[i+1][j], score[i][j+1])) + 1;
+		            }
+		            score[i+1][j+1] = Math.min(score[i+1][j+1], score[i1] ? score[i1][j1] + (i-i1-1) + 1 + (j-j1-1) : Infinity);
+		        }
+		        sd[source[i-1]] = i;
+		    }
+		    return score[m+1][n+1];
+		};
+
+
+		function levenshteinDistance(a, b) {
+			if (a.length === 0) return b.length; 
+			if (b.length === 0) return a.length; 
+
+			  var matrix = [];
+
+			  // increment along the first column of each row
+			  var i;
+			  for (i = 0; i <= b.length; i++) {
+			    matrix[i] = [i];
+			  }
+
+			  // increment each column in the first row
+			  var j;
+			  for (j = 0; j <= a.length; j++) {
+			    matrix[0][j] = j;
+			  }
+
+			  // Fill in the rest of the matrix
+			  for (i = 1; i <= b.length; i++) {
+			    for (j = 1; j <= a.length; j++) {
+			      if (b.charAt(i-1) == a.charAt(j-1)) {
+			        matrix[i][j] = matrix[i-1][j-1];
+			      } else {
+			        matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, // substitution
+			                                Math.min(matrix[i][j-1] + 1, // insertion
+			                                         matrix[i-1][j] + 1)); // deletion
+			      }
+			    }
+			  }
+
+			  return matrix[b.length][a.length];
+		};
+
+
+		
+
+
+		function drawGraph(container, nodes){
+			
+
+			// Checks if the browser is supported
+			if (!mxClient.isBrowserSupported())
+			{
+				// Displays an error message if the browser is not supported.
+				mxUtils.error('Browser is not supported!', 200, false);
+			}
+			else
+			{
+				// Disables the built-in context menu
+				mxEvent.disableContextMenu(container);
+
+				// Creates the graph inside the given container
+				graphCsv = new mxGraph(container);
+
+
+				graphCsv.setConnectable(true);
+				
+				// Defines the tolerance before removing the icons
+				var iconTolerance = 20;
+
+				// Shows icons if the mouse is over a cell
+				
+				graphCsv.addMouseListener(
+				{
+				    currentState: null,
+				    currentIconSet: null,
+				    mouseDown: function(sender, me)
+				    {
+				    	// Hides icons on mouse down
+			        	if (this.currentState != null)
+			        	{
+			          		this.dragLeave(me.getEvent(), this.currentState);
+			          		this.currentState = null;
+			        	}
+				    },
+				    mouseMove: function(sender, me)
+				    {
+				    	if (this.currentState != null && (me.getState() == this.currentState ||
+				    		me.getState() == null))
+				    	{
+				    		var tol = iconTolerance;
+				    		var tmp = new mxRectangle(me.getGraphX() - tol,
+				    			me.getGraphY() - tol, 2 * tol, 2 * tol);
+
+				    		if (mxUtils.intersects(tmp, this.currentState))
+				    		{
+				    			return;
+				    		}
+				    	}
+				    	
+						var tmp = graphCsv.view.getState(me.getCell());
+				    	
+				    	// Ignores everything but vertices
+						if (graphCsv.isMouseDown || (tmp != null && !graphCsv.getModel().isVertex(tmp.cell)))
+						{
+							tmp = null;
+						}
+
+				      	if (tmp != this.currentState)
+				      	{
+				        	if (this.currentState != null)
+				        	{
+				          		this.dragLeave(me.getEvent(), this.currentState);
+				        	}
+				        
+			        		this.currentState = tmp;
+				        
+				        	if (this.currentState != null)
+				        	{
+				          		this.dragEnter(me.getEvent(), this.currentState);
+				        	}
+				      	}
+				    },
+				    mouseUp: function(sender, me) { },
+				    dragEnter: function(evt, state)
+				    {
+				    	//console.log('dragEnter', cell.value);
+				    	if (this.currentIconSet == null)
+				    	{
+			    			this.currentIconSet = new mxIconSet(state);
+				    	}
+				    },
+				    dragLeave: function(evt, state)
+				    {
+				    	if (this.currentIconSet != null)
+				    	{
+			    			this.currentIconSet.destroy();
+			    			this.currentIconSet = null;
+				    	}
+				    }
+				});
+
+
+				// Enables rubberband selection
+				new mxRubberband(graphCsv);
+
+				// Gets the default parent for inserting new cells. This
+				// is normally the first child of the root (ie. layer 0).
+				var parent = graphCsv.getDefaultParent();
+
+				// Adds cells to the model in a single step
+				graphCsv.getModel().beginUpdate();
+				try
+				{
+					var v = [];
+					var e = [];
+
+					var nodesDepth = 0;
+					for (var i = 0; i < nodes.length; i++) {
+						v[i] = [];
+						nodesDepth+=(nodes[Math.max(0,i-1)].length-1)*60*(1%(i+1))+20;
+						v[i].push(graphCsv.insertVertex(parent, null, nodes[i][0], 20, nodesDepth, 80, 30, "fillColor=palegreen"));
+						for (var j = 1; j < nodes[i].length; j++) {
+							v[i].push(graphCsv.insertVertex(parent, null, nodes[i][j], 300, nodesDepth+60*(j-1), 80, 30, "fillColor=coral")); //Math.max for no negative index
+							//var v2 = graph.insertVertex(parent, null, 'World!', 200, 150, 80, 30);
+							e.push(graphCsv.insertEdge(parent, null, '', v[i][0], v[i][v[i].length-1]));
+						}
+						
+					}
+				}
+				finally
+				{
+					// Updates the display
+					graphCsv.getModel().endUpdate();
+					//graphOntology = graph;
+				}
+			}
+		};
+
+			$("#inputDatasource").change(function(evt) {
+
+				if (evt.target.files != undefined) {
+					var reader = new FileReader();
+					reader.onload = function(e) {
+						var fileName = evt.target.files[0].name;
+						var fileExt =  fileName.slice((fileName.lastIndexOf(".") - 1 >>> 0) + 2);
+						//console.log("I READ", fileName, fileExt);
+						$('#filePath').val(fileName);
+						if(fileExt=="csv"){
+							//console.log("CSV!!!");
+							var csvContent=e.target.result;
+							sourceFilename = evt.target.files[0].name;
+							//console.log(csvContent);
+							inputFileCont = csvContent;
+							var data;
+							data = $.csv.toArrays(csvContent);
+							for (var i = 0; i < data[0].length; i++) {
+								//console.log("--"+ data[0][i]+"\n");
+							}
+							
+							$('#connectToDs').on('click', function (e) {
+    							var nodes = [[]];
+    							nodes[0].push(evt.target.files[0].name)
+    							nodes[0].push.apply(nodes[0],data[0]);
+    							//console.log("LETSDRAW!!!", nodes);
+    							drawGraph(document.getElementById('graphContainer2'),nodes);
+
+    							$('#connectModal').modal('hide');
+    							
+
+							});
+							/*
+							var csvContent=e.target.result;
+							sourceFilename = evt.target.files[0].name;
+							console.log("filename: " + evt.target.files[0].name);
+							console.log(csvContent);
+							var data;
+							data = $.csv.toArrays(csvContent);
+							for (var i = 0; i < data[0].length; i++) {
+								console.log("--"+ data[0][i]+"\n");
+							}
+							//console.log(data[0][2]);
+
+
+							drawGraph(document.getElementById('graphContainer2'),evt.target.files[0].name, data[0] );
+							*/
+						}
+						else if (fileExt=="shp" || fileExt=="dbf"){
+							console.log("SHAPEFILE");
+							var shapefileAttributes=[];
+
+   						 	$('#connectToDs').on('click', function (e) {
+	    						if(fileExt=="shp"){
+									$("#errorAlert").text("Please select the .dbf file");
+									$("#errorAlert").show();
+									$('#connectModal').modal('hide');
+								}
+								else{
+		    						var nodes = [[]];
+	    							nodes[0].push(evt.target.files[0].name)
+	    							nodes[0].push.apply(nodes[0],shapefileAttributes);
+		    						drawGraph(document.getElementById('graphContainer2'),nodes);
+		    						$('#connectModal').modal('hide');
+	    						}
+
+							});
+
+							//console.log(e.target.result)
+							var cont = e.target.result;
+							inputFileCont = "shp";
+							var index = cont.indexOf(" ");
+							var newCont = cont.slice(0, index+1)
+							//console.log("NEW = ", newCont)
+							newCont = newCont.replace(/[^\x20-\x7E]+/g, ' ');
+							var atr=[];
+							atr[0]="";
+							var numOfatr = 0;
+							for (var i = 1; i < newCont.length-1; i++) {
+								if((newCont[i]!=' ' && newCont[i+1]!=' ') || (newCont[i]!=' ' && newCont[i-1]!=' ')) {
+									if(newCont[i-1]==' '){
+										numOfatr++;
+										atr[numOfatr] = "";
+									}
+									atr[numOfatr]+=newCont[i]
+								}
+								else{
+									//numOfatr++;
+									//atr[numOfatr] = []
+								}
+							}
+							shapefileAttributes = atr.slice(1,atr.length);
+							//console.log("ATR = ", shapefileAttributes);
+
+
+						}
+						else{
+							$('#connectToDs').on('click', function (e) {
+								$("#errorAlert").text("Please select a csv or a dbf file.");
+								$("#errorAlert").show();
+								$('#connectModal').modal('hide');
+							});
+						}
+
+						
+						
+					};
+					reader.readAsText(evt.target.files.item(0));
+
+				}
+				return false;
+			});
+		
+			$(function(){
+
+				$('#connectToDb').click( function() {
+					inputFileCont = "db";
+			    	$.ajax({
+			        	url: 'http://localhost:8081/DataMatching2RML-R2RMLMapping2RDF/ConnectToDb',
+			        	type: 'post',
+			        	dataType: 'json',
+			        	data: $('#dbform').serialize(),
+			        	success: function(data) {
+			            	//console.log(data);
+			            	dbData = data;
+			            	var dbSchema = [];
+			            	$.each(data, function(i,j){
+								//console.log(i,j)
+								dbSchema.push([]);
+								//console.log(dbSchema, dbSchema.length)
+								dbSchema[dbSchema.length-1].push(i)
+								$.each(j, function(k, m){
+									dbSchema[dbSchema.length-1].push(k)				
+								});
+							});
+							//console.log("Schema = ", dbSchema);
+							drawGraph(document.getElementById('graphContainer2'), dbSchema);
+							$('#connectModal').modal('hide');
+			            },
+					    error: function(data) {   
+		            		console.log("error");
+		            		$("#connectToDbError").show();
+		        		}
+
+			    	});
+				});
+
+			});
+			
+			$(function(){
+
+				$('#dumpToRdfButton').click( function() {
+					if(inputFileCont=="shp"){
+						console.log("SHP");
+						$("#uploadZipModal").modal();
+
+					}
+					else if (inputFileCont=="db") {
+						console.log("its db");
+						var btn = $(this);
+						btn.button('loading');
+						$.ajax({
+				        	url: 'http://localhost:8081/DataMatching2RML-R2RMLMapping2RDF/DumpToRdf',
+				        	type: 'post',
+				        	dataType: 'text',
+				        	data: {'outputFormat': $('input[name=radioSelectRdfFormat]:checked').val(),
+				        			'epsgCode': $('input[name=epsgCode]').val(), 
+				        			'outputFilename': $('input[name=DumpRdfFilename]').val(), 
+				        			rml: ace.edit("editor").getValue().replace(/\n|\t/g," "),
+				        			inputFileCont : inputFileCont.replace(/,/g,"\t"),
+				        			inputFileType : "db",
+				        			'dbUserName': $('input[name=connectUsrname]').val(),
+				        			'dbPassword': $('input[name=connectPsw]').val(),
+				        			'dbHost': $('input[name=connectHost]').val(),
+				        			'dbPort': $('input[name=connectPort]').val(),
+				        			'dbEngine': $('input[name=connectEngine]').val(),
+				        			'dbName': $('input[name=connectDbName]').val(),
+				        		},
+				        	success: function(data) {
+				            	console.log("successss");
+				            	
+				            	//console.log(data);
+				            	//var outputContent="";
+
+								if($('input[name=DumpRdfFilename]').val() == ""){
+									if($('input[name=radioSelectRdfFormat]:checked').val() =="turtle"){
+										var ext = ".ttl";
+									}
+									else if($('input[name=radioSelectRdfFormat]:checked').val() =="ntriples"){
+										var ext = ".nt";
+									}
+									else if($('input[name=radioSelectRdfFormat]:checked').val() =="n3"){
+										var ext = ".n3";
+									}
+									else if($('input[name=radioSelectRdfFormat]:checked').val() =="rdfXml"){
+										var ext = ".rdf";
+									}
+									
+									saveTextAsFile(data, "output"+ext);
+								}
+								else{
+									saveTextAsFile(data, $('input[name=DumpRdfFilename]').val());
+								}
+								btn.button('reset');
+				            	
+				            },
+				            error: function(data) {   
+	            				console.log("error");
+	            				btn.button('reset');
+	            				$("#d2RdfError").show();
+	        				}
+				    	});
+
+					}
+					else{
+						console.log("d2rdf2");
+						var btn = $(this);
+						btn.button('loading');
+				    	$.ajax({
+				        	url: 'http://localhost:8081/DataMatching2RML-R2RMLMapping2RDF/DumpToRdf',
+				        	type: 'post',
+				        	dataType: 'text',
+				        	data: {'outputFormat': $('input[name=radioSelectRdfFormat]:checked').val(),
+				        			'epsgCode': $('input[name=epsgCode]').val(), 
+				        			'outputFilename': $('input[name=DumpRdfFilename]').val(), 
+				        			rml: ace.edit("editor").getValue().replace(/\n|\t/g," "),
+				        			inputFileCont : inputFileCont.replace(/,/g,"\t"),
+				        			inputFileType : "csv"
+				        		},
+				        	success: function(data) {
+				            	console.log("successss");
+				            	btn.button('reset');
+
+								
+								if($('input[name=DumpRdfFilename]').val() == ""){
+									//console.log("EMPTY")
+									if($('input[name=radioSelectRdfFormat]:checked').val() =="turtle"){
+										var ext = ".ttl";
+									}
+									else if($('input[name=radioSelectRdfFormat]:checked').val() =="ntriples"){
+										var ext = ".nt";
+									}
+									else if($('input[name=radioSelectRdfFormat]:checked').val() =="n3"){
+										var ext = ".n3";
+									}
+									else if($('input[name=radioSelectRdfFormat]:checked').val() =="rdfXml"){
+										var ext = ".rdf";
+									}
+									
+									saveTextAsFile(data, "output"+ext);
+								}
+								else{
+									saveTextAsFile(data, $('input[name=DumpRdfFilename]').val());
+								}
+				            	
+				            },
+				            error: function(data) {   
+	            				console.log("error");
+	            				btn.button('reset');
+	            				$("#d2RdfError").show();
+	        				}
+				    	});
+					}
+				});
+
+			});
+
+
+			function dumpToRdfShp() {
+				console.log("d2rdf");
+           		$.ajax({
+					url: 'http://localhost:8081/DataMatching2RML-R2RMLMapping2RDF/DumpToRdf',
+					type: 'post',
+					dataType: 'text',
+					data: {'outputFormat': $('input[name=radioSelectRdfFormat]:checked').val(),
+							'epsgCode': $('input[name=epsgCode]').val(), 
+							'outputFilename': $('input[name=DumpRdfFilename]').val(), 
+							rml: ace.edit("editor").getValue().replace(/\t/g," "),
+							inputFileCont : inputFileCont.replace(/,/g,"\t"),
+							inputFileType : "shp"
+					},
+					success: function(data) {
+						console.log("successss");
+						if($('input[name=DumpRdfFilename]').val() == ""){
+							console.log("EMPTY")
+							if($('input[name=radioSelectRdfFormat]:checked').val() =="turtle"){
+								var ext = ".ttl";
+							}
+							else if($('input[name=radioSelectRdfFormat]:checked').val() =="ntriples"){
+								var ext = ".nt";
+							}
+							else if($('input[name=radioSelectRdfFormat]:checked').val() =="n3"){
+								var ext = ".n3";
+							}
+							else if($('input[name=radioSelectRdfFormat]:checked').val() =="rdfXml"){
+								var ext = ".rdf";
+							}
+							
+							saveTextAsFile(data, "output"+ext);
+						}
+						else{
+							console.log("NOT empty")
+							saveTextAsFile(data, $('input[name=DumpRdfFilename]').val());
+						}      	
+					},
+					error: function(data) {   
+		            	console.log("error");
+		            	$("#d2RdfShpError").show();
+		        	}
+				});							
+
+			};
+
+
+
+			$(function(){
+
+				$('#uploadZipButtonAjax').click( function() {
+					console.log("Upload zip");
+					var btn = $(this);
+        			btn.button('loading');
+					var formData = new FormData($('#uploadZip')[0]);
+			    	$.ajax({
+			        	url: 'http://localhost:8081/DataMatching2RML-R2RMLMapping2RDF/Upload',
+			        	type: 'post',
+			        	dataType: 'text',
+			        	data: formData ,
+			        	processData: false,
+    					contentType: false,
+			        	success: function(data) {
+			            	console.log("unzip success");
+			            	btn.button('reset');
+			            	 $("#UploadZipSuccess").show();
+			            	//call ajax for shp
+			            	dumpToRdfShp();
+			            	//$("#uploadZipModal").modal("hide");
+			            	
+			            },
+			            error: function(data) {
+			            	console.log("fail to upload & unzip");
+			            	btn.button('reset');
+			            	 $("#UploadZipError").show();
+			            }
+			    	});
+			    	
+				});
+
+			});
+
+			//$('#connectToDs').on('click', function (e) {
+    		//	console.log("I LOVE IT!!!")
+    			
+
+			//});
+
+			$("#input2").change(function(evt) {
+
+				if (evt.target.files != undefined) {
+					var reader = new FileReader();
+					reader.onload = function(e) {
+						//console.log(e.target.result);
+
+						var fileName = evt.target.files[0].name;
+						var fileExt =  fileName.slice((fileName.lastIndexOf(".") - 1 >>> 0) + 2);
+						console.log(fileExt);
+
+						if(fileExt == "ttl" || fileExt == "nt"){
+							var mimeType = 'text/turtle';
+						}
+						else if(fileExt == "rdf" || fileExt == "xml" || fileExt == "rdfxml"){
+							var mimeType = "application/rdf+xml";
+						}
+						else if(fileExt == "n3"){jsonld
+							var mimeType = "text/n3";
+						}
+						//else if(fileExt =="jsonld"){
+						//	var mimeType = "application/ld+json";
+						//}
+						//else if(fileExt == "nq"){
+						//	var mimeType = "application/n-quads";
+						//}
+						else{
+							var mimeType = 'text/turtle';
+						}
+
+
+						
+						var store = $rdf.graph()
+
+						try {
+						    $rdf.parse(e.target.result, store, 'http://mygraph.com/1' , mimeType)
+						} catch (err) {
+						    console.log(err);
+						    $("#errorAlert").text("Failed to parse Ontology. Only Turtle, N-Triples, N3 and RDF/XML formats allowed. Files must have the right extension.");
+						    $("#errorAlert").show();
+						    return;
+						}
+
+                        
+
+                        var type = $rdf.sym('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
+                        var classDecl = $rdf.sym('http://www.w3.org/2000/01/rdf-schema#Class');
+                        var matches = store.statementsMatching(undefined, type,classDecl);
+                        //console.log("matches = ", matches)
+                        var classes = [];
+                        for (var i=0; i<matches.length;i++) {
+                            
+                            //console.log(matches[i].subject.uri) // a person having friends
+                            classes.push(matches[i].subject.uri);
+                        }
+                        //console.log(classes);
+                        var domain  =$rdf.sym('http://www.w3.org/2000/01/rdf-schema#domain');
+                        var classSym;
+                        var friends;
+                        var nodes = [];
+                        
+                        for (i = 0; i < classes.length; i++) {
+                        	nodes[i] = [];
+                        	nodes[i][0] = classes[i];
+	                        classSym  =$rdf.sym(classes[i]);
+	                        friends = store.statementsMatching(undefined, domain,classSym)
+	                        //console.log("Properties = ", friends);
+	                        for (var j = 0; j < friends.length; j++) {
+	                        	nodes[i].push(friends[j].subject.uri)
+	                        }
+                        }
+
+                        var subPropertyOf  =$rdf.sym('http://www.w3.org/2000/01/rdf-schema#subPropertyOf');
+                        matches = store.statementsMatching(undefined, subPropertyOf,undefined);
+
+                        var itemIndex;
+                        for (i=0; i<matches.length;i++) {
+                            
+                            //console.log(matches[i].subject.uri) 
+                            for (j = 0; j < nodes.length; j++) {
+                            	itemIndex = nodes[j].indexOf(matches[i].object.uri, 1);
+                            	//console.log("index = ", itemIndex)
+                            	if(itemIndex!=-1){
+                            		nodes[j].push(matches[i].subject.uri)
+                            	}
+                            }
+                            
+                        }
+                        //console.log("NODES = ", nodes)
+
+                        drawGraph1(document.getElementById('graphContainer1'), nodes);
+
+
+					};
+					reader.readAsText(evt.target.files.item(0));
+
+
+				}
+				return false;
+			});
+			
+
+
+
+			$('#luckyButton').on('click', function (e) {
+				if (typeof graphOntology !== 'undefined' && typeof graphCsv !== 'undefined') {
+    				var btn = $(this);
+       				btn.button('loading');
+       				if($('input[name=radioSelectFunct]:checked', '#selectFunctForm').val()=="radioSelectFunct1"){
+						console.log("Brute-force")
+						luckyBrute();
+					
+					}
+					else if($('input[name=radioSelectFunct]:checked', '#selectFunctForm').val()=="radioSelectFunct2"){
+						console.log("greedy");
+						luckyGreedy();
+					
+					}
+					btn.button('reset');
+				}
+				else{
+					$("#errorAlert").text("Browse Files First.");
+					$("#errorAlert").show();
+				}
+       			//console.log(graphOntology);
+				
+			});
+
+
+
+			function luckyGreedy() {
+    			var cells = graphOntology.getDefaultParent().children
+    			var ontParentVertices = [];
+    			for (var i = 0; i < cells.length; i++) {
+    				if(cells[i].isEdge()){
+    					//console.log(cells.length);
+    					if(containsObject(cells[i].source, ontParentVertices)){
+    						continue;
+    					}
+    					else {
+    						console.log(cells[i].source.value)
+    						ontParentVertices.push(cells[i].source)
+    					}
+    				}
+    			}
+    			//console.log("ont = ", ontParentVertices)
+    				
+    			//ds
+    			var dsCells = graphCsv.getDefaultParent().children
+    			var dsParentVertices = [];
+    			for (var i = 0; i < dsCells.length; i++) {
+    				if(dsCells[i].isEdge()){
+    					if(containsObject(dsCells[i].source, dsParentVertices)){
+    						continue;
+    					}
+    					else {
+    						//console.log(dsCells[i].source.value)
+    						dsParentVertices.push(dsCells[i].source)
+    					}
+    				}
+    			}
+    			//console.log("ds = ", dsParentVertices)
+
+    			var dsNodes = [];
+    			for (i = 0; i < dsParentVertices.length; i++) {
+    				var dsEdges = graphCsv.getConnections(dsParentVertices[i]);
+    				
+    				var dsChildren = [];
+
+					for (var j = 0; j < dsEdges.length; j++) {
+						dsChildren[j] = dsEdges[j].target.value;
+					}
+					dsNodes[i]=[];
+					dsNodes[i].push(dsParentVertices[i].value);
+					dsNodes[i].push.apply(dsNodes[i],dsChildren);
+
+					//console.log("DSCHILDREN = "+dsChildren)
+    			}
+
+    			//console.log("DSNODES = ", dsNodes);
+
+
+    			var ontNodes = [];
+    			for (i = 0; i < ontParentVertices.length; i++) {
+    				var ontEdges = graphOntology.getConnections(ontParentVertices[i]);
+    				
+    				var ontChildren = [];
+
+					for (var j = 0; j < ontEdges.length; j++) {
+						ontChildren[j] = ontEdges[j].target.value;
+					}
+					ontNodes[i]=[];
+					ontNodes[i].push(ontParentVertices[i].value);
+					ontNodes[i].push.apply(ontNodes[i],ontChildren);
+
+					//console.log("ONTCHILDREN = "+ontChildren)
+    			}
+
+    			//console.log("ONTNODES = ", ontNodes);
+
+    			
+    			allMappings = []
+
+    			for (i = 0; i < ontNodes.length; i++) {
+    				for (j = 0; j < dsNodes.length; j++) {
+    					//
+    					var allDistances = [];
+    					//console.log(ontNodes[i],dsNodes[j] )
+						for (var k = 1; k < ontNodes[i].length; k++) {
+							for (var l = 1; l < dsNodes[j].length; l++) {
+								allDistances.push({ontName:ontNodes[i][k], dsName:dsNodes[j][l], distance:stringMetric(keepAfterHash(ontNodes[i][k]),keepAfterHash(dsNodes[j][l]))});
+							}
+						}
+						//console.log("ALL  = ", allDistances)
+						
+						allDistances.sort(function(a, b){
+	    					return a.distance - b.distance;
+						});
+						
+						//console.log("ALL  = ", allDistances)
+
+						var finalMapping = [];
+						var visitedNodes = [];
+
+						var totalDistance=0;
+						for (k = 0; k < allDistances.length; k++) {
+							if(visitedNodes.indexOf(allDistances[k].dsName)==-1 && visitedNodes.indexOf(allDistances[k].ontName)==-1){
+								finalMapping.push(allDistances[k])
+								totalDistance+=allDistances[k].distance;
+								visitedNodes.push(allDistances[k].dsName, allDistances[k].ontName) 
+							}
+						}
+
+						//console.log("FINAL = ", finalMapping)
+						allMappings.push({ontP:ontNodes[i][0], dsP:dsNodes[j][0], mappings:finalMapping, totalDistance:totalDistance/finalMapping.length});
+						//console.log(finalMapping2)
+    					//
+    				}
+    			}
+
+    			
+    			allMappings.sort(function(a, b){
+	    			return a.totalDistance - b.totalDistance;
+				});
+				
+
+    			var finalMappings = []
+    			visitedNodes = [];
+
+    			for (k = 0; k < allMappings.length; k++) {
+					if(visitedNodes.indexOf(allMappings[k].ontP)==-1 && visitedNodes.indexOf(allMappings[k].dsP)==-1){
+						finalMappings.push(allMappings[k])
+						//totalDistance+=allMappings[k].distance;
+						visitedNodes.push(allMappings[k].dsP, allMappings[k].ontP) 
+					}
+				}
+				//console.log("MAPPINGS = ", finalMappings);
+
+
+
+				//
+				var modalCont = "";
+
+				for (var i = 0; i < finalMappings.length; i++) {
+					
+				
+					var modalMappingTableCont = "<table class='table table-bordered'>"+
+										    "<thead>"+
+										      "<tr>"+
+										        "<th>Ontology Property</th>"+
+										        "<th>Mapped to</th>"+
+										        "<th>Score*</th>"+
+										         "<th>Check</th>"+
+										      "</tr>"+
+										    "</thead>"+
+										    "<tbody>"
+						     
+					for (j = 0; j < finalMappings[i].mappings.length; j++) {
+						modalMappingTableCont += "<tr>"+"<td>"+finalMappings[i].mappings[j].ontName+"</td>"+ "<td>"+finalMappings[i].mappings[j].dsName+"</td>"+"<td>"+finalMappings[i].mappings[j].distance+"</td>" +"<td>"+" <input type='checkbox' id = 'checkMatch"+i+"' onchange='handleCheckboxChange(this, \""+finalMappings[i].mappings[j].dsName+"\", \""+finalMappings[i].mappings[j].ontName+"\", \""+finalMappings[i].dsP+"\")'>"+"</td>" + "</tr>"
+					}
+
+						modalMappingTableCont+="</tbody> </table>"
+
+						
+						modalCont += "<div class='panel-group'>"+
+										    "<div class='panel panel-default'>"+
+										      "<div class='panel-heading'>"+
+										        "<h4 class='panel-title'>"+
+										          "<a data-toggle='collapse' href='#collapse"+i+"'><strong>RDF Class: </strong>"+ finalMappings[i].ontP+"<br/><strong>Best Match to: </strong>"+ finalMappings[i].dsP+"</a>"+
+										        "</h4>"+
+										      "</div>"+
+										      "<div id='collapse"+i+"' class='panel-collapse collapse'>"+
+										        "<div class='panel-body'>"+modalMappingTableCont+"</div>"+
+										        "<div class='panel-footer'></div>"+
+										      "</div>"+
+										    "</div>"; 
+				}
+    			//
+				//
+
+				mappings = [];
+				inputFileParents = [];
+
+				document.getElementById("demo").innerHTML = modalCont;
+				//document.getElementById("demo").innerHTML = 5 + 5;
+				$("#myModal").modal();
+
+
+    			
+
+			};
+
+		function luckyBrute(){
+				console.log("LUCKY BRUTE")
+    			//console.log(graphOntology.getDefaultParent().children)
+    			var cells = graphOntology.getDefaultParent().children
+    			var ontParentVertices = [];
+    			for (var i = 0; i < cells.length; i++) {
+    				if(cells[i].isEdge()){
+    					//console.log(cells.length);
+    					if(containsObject(cells[i].source, ontParentVertices)){
+    						continue;
+    					}
+    					else {
+    						console.log(cells[i].source.value)
+    						ontParentVertices.push(cells[i].source)
+    					}
+    				}
+    			}
+    			//console.log("ont = ", ontParentVertices)
+    				
+    			//ds
+    			var dsCells = graphCsv.getDefaultParent().children
+    			var dsParentVertices = [];
+    			for (var i = 0; i < dsCells.length; i++) {
+    				if(dsCells[i].isEdge()){
+    					if(containsObject(dsCells[i].source, dsParentVertices)){
+    						continue;
+    					}
+    					else {
+    						console.log(dsCells[i].source.value)
+    						dsParentVertices.push(dsCells[i].source)
+    					}
+    				}
+    			}
+    			//console.log("ds = ", dsParentVertices)
+
+    			var dsNodes = [];
+    			for (i = 0; i < dsParentVertices.length; i++) {
+    				var dsEdges = graphCsv.getConnections(dsParentVertices[i]);
+    				
+    				var dsChildren = [];
+
+					for (var j = 0; j < dsEdges.length; j++) {
+						dsChildren[j] = dsEdges[j].target.value;
+					}
+					dsNodes[i]=[];
+					dsNodes[i].push(dsParentVertices[i].value);
+					dsNodes[i].push.apply(dsNodes[i],dsChildren);
+
+					//console.log("DSCHILDREN = "+dsChildren)
+    			}
+
+    			//console.log("DSNODES = ", dsNodes);
+
+
+    			var ontNodes = [];
+    			for (i = 0; i < ontParentVertices.length; i++) {
+    				var ontEdges = graphOntology.getConnections(ontParentVertices[i]);
+    				
+    				var ontChildren = [];
+
+					for (var j = 0; j < ontEdges.length; j++) {
+						ontChildren[j] = ontEdges[j].target.value;
+					}
+					ontNodes[i]=[];
+					ontNodes[i].push(ontParentVertices[i].value);
+					ontNodes[i].push.apply(ontNodes[i],ontChildren);
+
+					//console.log("ONTCHILDREN = "+ontChildren)
+    			}
+
+    			//console.log("ONTNODES = ", ontNodes);
+
+    			
+    			allMappings = []
+
+    			for (i = 0; i < ontNodes.length; i++) {
+    				for (j = 0; j < dsNodes.length; j++) {
+    					//
+    					
+
+						var finalMapping;
+						//console.log("ONT  = ", ontNodes[i].slice(1,ontNodes[i].length) );
+						//console.log("ds = ", dsNodes[j].slice(1, dsNodes[j].length));
+						var ontNodesNotParent = ontNodes[i].slice(1,ontNodes[i].length);
+						var dsNodesNotParent = dsNodes[j].slice(1, dsNodes[j].length);
+
+						if(ontNodesNotParent.length>dsNodesNotParent.length){
+							var testResults = permutate.getPermutations(ontNodesNotParent, dsNodesNotParent.length, ontNodesNotParent, dsNodesNotParent);
+						}
+						else{
+							var testResults = permutate.getPermutations(dsNodesNotParent, ontNodesNotParent.length, dsNodesNotParent, ontNodesNotParent);
+						}
+
+						//console.log("TEST = ", testResults);
+						
+						var tempMappings = [];
+						for (var k = 0; k < testResults.permutations.length; k++) {
+							if(ontNodesNotParent.length>dsNodesNotParent.length){
+								tempMappings.push({ontName:testResults.permutations[k].strB,dsName:testResults.permutations[k].strS, distance:testResults.permutations[k].distance}); 
+
+							}
+							else{
+								tempMappings.push({ontName:testResults.permutations[k].strS,dsName:testResults.permutations[k].strB, distance:testResults.permutations[k].distance}); 
+
+							}
+						}
+
+						finalMapping = {ontP:ontNodes[i][0], dsP:dsNodes[j][0], mappings: tempMappings, totalDistance:testResults.totalDistance/testResults.permutations.length};
+
+						
+
+						//console.log("FINAL = ", finalMapping)
+						allMappings.push(finalMapping);
+    				}
+    			}
+    			//console.log("ALL = ",allMappings );
+
+
+    			var allMappings2D =[];
+
+    			if(ontNodes.length>dsNodes.length){
+    				var greaterLength = ontNodes.length;
+    				var smallerLength = dsNodes.length;
+    			}
+    			else{
+    				var greaterLength = dsNodes.length;
+    				var smallerLength = ontNodes.length;
+    			}
+
+
+    			while(allMappings.length) allMappings2D.push(allMappings.splice(0,dsNodes.length));
+
+    			//console.log("ALL2d = ",allMappings2D );
+    			
+    			var possibleMappingsIndex;
+
+    			var num = "";
+    			//var num2 = "012";
+    			for (i = 0; i < greaterLength; i++) {
+    				num+=i.toString();
+    			}
+    			//console.log("num = ", num);
+    			//console.log("num2 = ", num2);
+
+    			possibleMappingsIndex = permutateClasses.getPermutations(num,smallerLength);
+
+    			//console.log("Ind", possibleMappingsIndex, smallerLength);
+    			
+
+    			var bestMapping = [];
+    			var possibleMapping = [];
+    			var bestTotalDistance = Infinity;
+    			var newTotalDistance;
+    			for (i = 0; i < possibleMappingsIndex.length; i++) {
+    				newTotalDistance = 0;
+    				possibleMapping = [];
+    				for (var j = 0; j<smallerLength; j++) {
+    					if(dsNodes.length>ontNodes.length){
+    						newTotalDistance += allMappings2D[j][JSON.parse(possibleMappingsIndex[i].charAt(j))].totalDistance;
+    						possibleMapping.push(allMappings2D[j][JSON.parse(possibleMappingsIndex[i].charAt(j))]);
+    					}
+    					else{
+    						newTotalDistance += allMappings2D[JSON.parse(possibleMappingsIndex[i].charAt(j))][j].totalDistance;
+    						possibleMapping.push(allMappings2D[JSON.parse(possibleMappingsIndex[i].charAt(j))][j]);
+    					}
+    				}
+
+    				//
+    				//newTotalDistance = allMappings2D[0][JSON.parse(possibleMappingsIndex[i].charAt(0))].totalDistance+
+    				//					allMappings2D[1][JSON.parse(possibleMappingsIndex[i].charAt(1))].totalDistance +
+    				//					allMappings2D[2][JSON.parse(possibleMappingsIndex[i].charAt(2))].totalDistance;
+    				//
+    				//console.log("new dist = ", newTotalDistance);
+
+    				if(newTotalDistance<bestTotalDistance){
+    					bestTotalDistance = newTotalDistance;
+    					bestMapping = possibleMapping;
+    					//possibleMappings.push(allMappings2D[0][JSON.parse(possibleMappingsIndex[i].charAt(0))-1]);
+    					//possibleMappings.push(allMappings2D[1][JSON.parse(possibleMappingsIndex[i].charAt(1))-1]);
+    					//possibleMappings.push(allMappings2D[2][JSON.parse(possibleMappingsIndex[i].charAt(2))-1]);
+    					//console.log(bestTotalDistance);
+    				}
+    				//possibleMappings.push(allMappings2D[0][JSON.parse(possibleMappingsIndex[0].charAt(0))-1]);
+    				//possibleMappings.push(allMappings2D[1][JSON.parse(possibleMappingsIndex[0].charAt(1))-1]);
+    				//possibleMappings.push(allMappings2D[2][JSON.parse(possibleMappingsIndex[0].charAt(2))-1]);
+    			}
+
+    			//console.log("best  ", bestMapping);
+
+    			var finalMappings = bestMapping;
+    			
+				//console.log("MAPPINGS = ", finalMappings);
+
+
+
+				//
+				var modalCont = "";
+
+				for (var i = 0; i < finalMappings.length; i++) {
+					
+				
+					var modalMappingTableCont = "<table class='table table-bordered'>"+
+										    "<thead>"+
+										      "<tr>"+
+										        "<th>Ontology Property</th>"+
+										        "<th>Mapped to</th>"+
+										        "<th>Score*</th>"+
+										         "<th>Check</th>"+
+										      "</tr>"+
+										    "</thead>"+
+										    "<tbody>"
+						     
+					for (j = 0; j < finalMappings[i].mappings.length; j++) {
+						modalMappingTableCont += "<tr>"+"<td>"+finalMappings[i].mappings[j].ontName+"</td>"+ "<td>"+finalMappings[i].mappings[j].dsName+"</td>"+"<td>"+finalMappings[i].mappings[j].distance+"</td>" +"<td>"+" <input type='checkbox' id = 'checkMatch"+i+"' onchange='handleCheckboxChange(this, \""+finalMappings[i].mappings[j].dsName+"\", \""+finalMappings[i].mappings[j].ontName+"\", \""+finalMappings[i].dsP+"\")'>"+"</td>" + "</tr>"
+					}
+
+						modalMappingTableCont+="</tbody> </table>"
+
+						
+						modalCont += "<div class='panel-group'>"+
+										    "<div class='panel panel-default'>"+
+										      "<div class='panel-heading'>"+
+										        "<h4 class='panel-title'>"+
+										          "<a data-toggle='collapse' href='#collapse"+i+"'><strong>RDF Class: </strong>"+ finalMappings[i].ontP+"<br/><strong>Best Match to: </strong>"+ finalMappings[i].dsP+"</a>"+
+										        "</h4>"+
+										      "</div>"+
+										      "<div id='collapse"+i+"' class='panel-collapse collapse'>"+
+										        "<div class='panel-body'>"+modalMappingTableCont+"</div>"+
+										        "<div class='panel-footer'></div>"+
+										      "</div>"+
+										    "</div>"; 
+				}
+    			//
+				//
+
+				mappings = [];
+				inputFileParents = [];
+
+				document.getElementById("demo").innerHTML = modalCont;
+				//document.getElementById("demo").innerHTML = 5 + 5;
+				$("#myModal").modal();
+
+
+    			
+    			
+
+			};
+
+
+			$('#currentMapping').on('click', function (e) {
+    			
+    			//console.log("HELLOCM")
+    			//document.getElementById("demo").innerHTML = DnDModalCont;
+					//document.getElementById("demo").innerHTML = 5 + 5;
+				$("#myModal").modal();
+
+			});
+
+
+			$('#resetMapping').on('click', function (e) {
+    			
+
+    			$("#confirmReset").modal();
+    			
+    			$("#confirmYes").on('click', function(e){
+    				//console.log("I WILL RESET");
+    				$("#confirmReset").modal('hide');
+    				DnDModalCont = "";
+    				document.getElementById("demo").innerHTML = DnDModalCont;
+    			});
+    			
+
+			});
+
+
+
+			var mappings = []//global fix it later
+			
+			function handleCheckboxChange(checkbox, str1, str2, inputFileParent) {
+			   if(checkbox.checked == true){
+			   		inputFileParents.push(inputFileParent);
+			        console.log("CHECK")
+			        console.log("parent = ", inputFileParent);
+			        //mappings.push("<#EventsMapping>\nrml:logicalSource [\n rml:source\nrml:referenceFormulation ql:XPath;\nrml:iterator '/Events/Exhibition' ];\n  rr:subjectMap [ \nrr:template 'http://ex.com/{@id}'' ];")
+			        mappings.push("rr:predicateObjectMap [\n"+
+					'	rr:predicateMap [rr:constant <'+str2+'>]; \n'+
+					"	rr:objectMap [\n"+
+						'		rml:reference "'+str1+'";\n'+
+					"	];\n"+
+					"];\n");
+			   }
+			   else{
+			   		var index = mappings.indexOf("rr:predicateObjectMap [\n"+
+					'	rr:predicateMap [rr:constant <'+str2+'>]; \n'+
+					"	rr:objectMap [\n"+
+						'		rml:reference "'+str1+'";\n'+
+					"	];\n"+
+					"];\n");
+					console.log("INDEX = ", index)
+					console.log(mappings);
+					if (index != -1) {
+    					mappings.splice(index, 1);
+    					inputFileParents.splice(index, 1);
+					}
+					console.log(mappings);
+			      	console.log("UNCHECK")
+			   }
+			   console.log(checkbox.id, str1, str2, mappings);
+			};
+
+
+
+			function putMappingToEditor(){
+				console.log("rml's = ", mappings)
+				console.log("parents = ", inputFileParents)
+
+				var editor = ace.edit("editor");
+				var content = "";
+
+				if(inputFileCont!="db"){
+					content+=	'@prefix rr: <http://www.w3.org/ns/r2rml#>.\n'+
+							'@prefix  rml: <http://semweb.mmlab.be/ns/rml#> .\n'+
+							'@prefix ql: <http://semweb.mmlab.be/ns/ql#> .\n'+
+							'@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n'+
+							'@base <http://geotriples.eu/base> .\n'+
+							'@prefix rrx: <http://www.w3.org/ns/r2rml-ext#>.\n'+
+							'@prefix rrxf: <http://www.w3.org/ns/r2rml-ext/functions/def/>.\n'+
+							'@prefix ogc: <http://www.opengis.net/ont/geosparql#>.\n'+
+							'@prefix schema: <http://schema.org/>.\n';
+					content+='<#EventsMapping>\n'+
+							'rml:logicalSource [\n'+
+								'	rml:source "aa";\n'+
+								'	rml:referenceFormulation ql:CSV;\n'+
+								'	rml:iterator "$" ];\n'+
+							'rr:subjectMap [\n'+
+									'	rr:template "http://ex.com/{GeoTriplesID}";rr:class <http://mpla>  ];'				
+
+					content+="\n\n"
+
+					for (var i = 0; i < mappings.length; i++) {
+						content += mappings[i]+"\n";
+						console.log(mappings[i])
+					}
+					content+="."
+
+					if(inputFileCont=="shp"){
+						var shpFilename = inputFileParents[0].replace(".dbf", "");
+						content+="<#Geometry>\n" + 
+						"rml:logicalSource [\n" + 
+						"        rml:source \"/opt/tomcat/webapps/data/"+shpFilename+".shp\";        \n" + 
+						"        rml:referenceFormulation ql:SHP;\n" + 
+						"        rml:iterator \""+shpFilename+"\";\n" + 
+						"];\n" + 
+						"rr:subjectMap [\n" + 
+						"        rr:template \"http://ex.com/Geometry/{GeoTriplesID}\";\n" + 
+						"        rr:class ogc:Geometry;\n" + 
+						"];\n" + 
+						"rr:predicateObjectMap [\n" + 
+						"        rr:predicateMap [ rr:constant ogc:dimension ];\n" + 
+						"        rr:objectMap [\n" + 
+						"                rr:datatype  xsd:integer;\n" + 
+						"                rrx:function rrxf:dimension;\n" + 
+						"                rrx:argumentMap ( [ rml:reference \"the_geom\"; ] );\n" + 
+						"        ];\n" + 
+						"];\n" + 
+						"rr:predicateObjectMap [\n" + 
+						"        rr:predicateMap [ rr:constant ogc:asWKT ];\n" + 
+						"        rr:objectMap [\n" + 
+						"                rr:datatype  ogc:wktLiteral;\n" + 
+						"                rrx:function rrxf:asWKT;\n" + 
+						"                rrx:argumentMap ( [ rml:reference \"the_geom\"; ] );\n" + 
+						"        ];\n" + 
+						"];\n" + 
+						"rr:predicateObjectMap [\n" + 
+						"        rr:predicateMap [ rr:constant ogc:is3D ];\n" + 
+						"        rr:objectMap [\n" + 
+						"                rr:datatype  xsd:boolean;\n" + 
+						"                rrx:function rrxf:is3D;\n" + 
+						"                rrx:argumentMap ( [ rml:reference \"the_geom\"; ] );\n" + 
+						"        ];\n" + 
+						"];\n" + 
+						"rr:predicateObjectMap [\n" + 
+						"        rr:predicateMap [ rr:constant ogc:isEmpty ];\n" + 
+						"        rr:objectMap [\n" + 
+						"                rr:datatype  xsd:boolean;\n" + 
+						"                rrx:function rrxf:isEmpty;\n" + 
+						"                rrx:argumentMap ( [ rml:reference \"the_geom\"; ] );\n" + 
+						"        ];\n" + 
+						"];\n" + 
+						"rr:predicateObjectMap [\n" + 
+						"        rr:predicateMap [ rr:constant ogc:isSimple ];\n" + 
+						"        rr:objectMap [\n" + 
+						"                rr:datatype  xsd:boolean;\n" + 
+						"                rrx:function rrxf:isSimple;\n" + 
+						"                rrx:argumentMap ( [ rml:reference \"the_geom\"; ] );\n" + 
+						"        ];\n" + 
+						"];\n" + 
+						"rr:predicateObjectMap [\n" + 
+						"        rr:predicateMap [ rr:constant ogc:coordinateDimension ];\n" + 
+						"        rr:objectMap [\n" + 
+						"                rr:datatype  xsd:integer;\n" + 
+						"                rrx:function rrxf:coordinateDimension;\n" + 
+						"                rrx:argumentMap ( [ rml:reference \"the_geom\"; ] );\n" + 
+						"        ];\n" + 
+						"];\n" + 
+						"rr:predicateObjectMap [\n" + 
+						"        rr:predicateMap [ rr:constant ogc:spatialDimension ];\n" + 
+						"        rr:objectMap [\n" + 
+						"                rr:datatype  xsd:integer;\n" + 
+						"                rrx:function rrxf:spatialDimension;\n" + 
+						"                rrx:argumentMap ( [ rml:reference \"the_geom\"; ] );\n" + 
+						"        ];\n" + 
+						"]."
+					
+						content = content.replace(/rml:source "aa";/g,'rml:source "/opt/tomcat/webapps/data/'+shpFilename+'.shp";');
+						content = content.replace(/ql:CSV/g,'ql:SHP');
+						content = content.replace(/rml:iterator "\$"/g,'rml:iterator "'+shpFilename+'";');
+					}
+
+				}
+				else{
+					content+=	'@prefix geof: <http://www.opengis.net/def/function/geosparql/>.\n'+
+								'@prefix map: <#>.\n'+
+								'@prefix ogc: <http://www.opengis.net/ont/geosparql#>.\n'+
+								'@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.\n'+
+								'@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.\n'+
+								'@prefix rr: <http://www.w3.org/ns/r2rml#>.\n'+
+								'@prefix rrx: <http://www.w3.org/ns/r2rml-ext#>.\n'+
+								'@prefix rrxf: <http://www.w3.org/ns/r2rml-ext/functions/def/>.\n'+
+								'@prefix strdf: <http://strdf.di.uoa.gr/ontology#>.\n'+
+								'@prefix vocab: <ontology#>.\n'+
+								'@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n';
+
+					content+="\n";
+					
+					for (i = 0; i < inputFileParents.length; i++) {
+						if(i!=0 && inputFileParents.slice(0,i).indexOf(inputFileParents[i])!=-1){
+							continue;
+						}
+						else{
+							//
+						}
+						content+='map:'+inputFileParents[i]+'\n'+
+							'rr:logicalTable [\n'+
+								'	rr:tableName "`'+inputFileParents[i]+'`";\n'+
+								//'	rr:SQLQuery "";\n'+
+								' ];\n'+
+							'rr:subjectMap [\n'+
+								'	rr:class vocab:'+inputFileParents[i]+';'+
+								'	rr:template "http://ex.com/'+inputFileParents[i]+'/id/{`id`}";];';
+					
+
+						content+="\n\n";
+
+						var colTypes = {};
+
+						$.each(dbData, function(k, l) {
+							console.log(k,l);
+							console.log(k, typeof k);
+							if(k==inputFileParents[i]){
+								//console.log("OK");
+								colTypes = l;
+								return false;
+								//colTypes.push(l);
+								//$.each(l, function(m, n) {
+								//	console.log(m,n);
+
+								//});
+							}
+							//console.log("TYPES = ", colTypes);
+						});
+
+						for (var j = 0; j < mappings.length; j++) {
+							if(inputFileParents[i] == inputFileParents[j]){
+								//content += mappings[j]+"\n";
+								var colType = mappings[j].match(/rml:reference(.*)/gi);
+								//console.log("type = ", colType);
+								colType = colType[0].slice(15, -2);
+								console.log("type = ", colType);
+								$.each(colTypes, function(m, n) {
+									console.log(m,n);
+									if(m == colType){
+										console.log("TYPE = ", n, n.toLowerCase());
+										if(n.toLowerCase()=="char" || n.toLowerCase()=="varchar"){
+											mappings[j] = mappings[j].replace(/rr:objectMap \[/g,'rr:objectMap [\nrr:datatype xsd:string;');
+										}
+										else if(n.toLowerCase()=="int"){
+											mappings[j] = mappings[j].replace(/rr:objectMap \[/g,'rr:objectMap [\nrr:datatype xsd:integer;');
+										}
+										else if(n.toLowerCase()=="date"){
+											mappings[j] = mappings[j].replace(/rr:objectMap \[/g,'rr:objectMap [\nrr:datatype xsd:date;');
+										}
+										else{
+											mappings[j] = mappings[j].replace(/rr:objectMap \[/g,'rr:objectMap [\nrr:datatype xsd:string;');
+											console.log("NOTHING")
+										}
+									}
+
+								});
+								content += mappings[j]+"\n";
+							}
+							
+							console.log(mappings[j])
+						}
+
+						content+=".";
+						content+="\n\n";
+					}
+
+
+					
+
+					content = content.replace(/rml:reference /g,'rr:column ');
+					//content = content.replace(/rr:objectMap \[/g,'rr:objectMap [\nrr:datatype xsd:string;');
+
+				}
+
+				
+
+				//content = content.replace(new RegExp('rml:source "aa";', 'g'), 'rml:source "/opt/tomcat/webapps/data/gr_100km.shp";');
+
+				editor.setValue(content);
+
+				$("#modalMapping").modal();
+			}
+
+
+			function containsObject(obj, list) {
+			    for (var i = 0; i < list.length; i++) {
+			        if (list[i] === obj) {
+			            return true;
+			        }
+			    }
+
+			    return false;
+			};
+
+			
+
+			
+			var permutate = (function() {
+    
+			    var results = [];
+			    var possibleMappings = []; 
+			    var bestPerm = {permutations:[], totalDistance:Infinity};   
+			    
+			    function doPermute(input, output, used, size, level, arrB, arrS) {        
+			            
+			        if (size == level) {
+			        	//console.log("outputBJ = ", output)
+			        	possibleMappings.push({permutations:[], totalDistance:0});
+			        	//possibleMappings.push([]);
+			        	for (var j = 0; j < arrS.length; j++) {
+			        		possibleMappings[possibleMappings.length-1].permutations.push({strS: arrS[j], strB:output[j], distance:stringMetric(keepAfterHash(output[j]),keepAfterHash(arrS[j]) ) })
+			        		possibleMappings[possibleMappings.length-1].totalDistance += possibleMappings[possibleMappings.length-1].permutations[j].distance;
+			        	}
+			        	if (possibleMappings[possibleMappings.length-1].totalDistance < bestPerm.totalDistance){
+			        		bestPerm = possibleMappings[possibleMappings.length-1];
+			        	}
+			            var word = output.join('');
+			            //console.log("WORD = ", word)
+			            results.push(word);
+			            return;
+			        } 
+			        
+			        level++;
+			        
+			        for (var i = 0; i < input.length; i++) {
+			            
+			            if (used[i]) {
+			                continue;
+			            }            
+			            
+			            used[i] = true;
+
+			            //console.log("INPUT    = ", input[i])
+			            output.push(input[i]);
+			            
+			            doPermute(input, output, used, size, level, arrB, arrS);
+			            
+			            used[i] = false;
+			            
+			            output.pop();
+			        }
+
+			    }
+			    
+			    return {
+			        getPermutations: function(input, size, arrB, arrS) {
+			            
+			            //var chars = input.split('');
+			            bestPerm = {permutations:[], totalDistance:Infinity};
+			            results = [];
+			            possibleMappings = [];
+			            chars = input;
+			            var output = [];
+			            var used = new Array(chars.length);      
+
+			            doPermute(chars, output, used, size, 0, arrB, arrS);   
+
+			            console.log("possibleMappings = ", possibleMappings)
+			            console.log("BUT BEST: ", bestPerm)     
+
+			            return bestPerm;    
+			        }
+			    }
+			})();
+
+
+			var permutateClasses = (function() {
+    
+			    var results = [];    
+			    
+			    function doPermute(input, output, used, size, level) {        
+			        if (size == level) {
+			            var word = output.join('');
+			            results.push(word);
+			            return;
+			        } 
+			        
+			        level++;
+			        
+			        for (var i = 0; i < input.length; i++) {            
+			            if (used[i]) {
+			                continue;
+			            }            
+			            
+			            used[i] = true;
+			            output.push(input[i]);            
+			            doPermute(input, output, used, size, level);            
+			            used[i] = false;            
+			            output.pop();
+			        }
+			    }
+			    
+			    return {
+			        getPermutations: function(input, size) {
+			            
+			            var chars = input.split('');
+			            var output = [];
+			            var used = new Array(chars.length);      
+
+			            doPermute(chars, output, used, size, 0);        
+
+			            return results;    
+			        }
+			    }
+			})();
+
+
+
+			//make dropdown behave like a select list
+			$(".dropdown-menu li a").click(function(){
+			  var selText = $(this).text();
+			  $(this).parents('.btn-group').find('.dropdown-toggle').html(selText+' <span class="caret"></span>');
+			});
+
+
+
+			function saveTextAsFile(output, fileName){      
+			    var textToWrite =output;
+			
+			    var textFileAsBlob = new Blob([textToWrite], {type:'text/plain'});
+			// Specify the name of the file to be saved
+			    var fileNameToSaveAs = fileName;
+			    
+
+			// create a link for our script to 'click'
+			    var downloadLink = document.createElement("a");
+			//  supply the name of the file (from the var above).
+			// you could create the name here but using a var
+			// allows more flexability later.
+			    downloadLink.download = fileNameToSaveAs;
+			// provide text for the link. This will be hidden so you
+			// can actually use anything you want.
+			    downloadLink.innerHTML = "My Hidden Link";
+			    
+			// allow our code to work in webkit & Gecko based browsers
+			// without the need for a if / else block.
+			    window.URL = window.URL || window.webkitURL;
+			          
+			// Create the link Object.
+			    downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+			// when link is clicked call a function to remove it from
+			// the DOM in case user wants to save a second file.
+			    downloadLink.onclick = destroyClickedElement;
+			// make sure the link is hidden.
+			    downloadLink.style.display = "none";
+			// add the link to the DOM
+			    document.body.appendChild(downloadLink);
+			    
+			// click the new link
+			    downloadLink.click();
+			}
+
+
+
+			function destroyClickedElement(event)
+			{
+			// remove the link from the DOM
+			    document.body.removeChild(event.target);
+			}
+
+
+			
+
+			function changeMetric(sel){
+				if(sel.value=="Levenshtein") {
+					distanceFunction = "Levenshtein";
+					document.getElementById("distName").innerHTML = "*Distance Function is Levenshtein";
+					
+				}
+				else if(sel.value=="Damerau") {
+					distanceFunction = "Damerau";
+					document.getElementById("distName").innerHTML = "*Distance Function is Damerau–Levenshtein";
+
+				}
+			};
+
+			function stringMetric(str1, str2){
+				if(distanceFunction=="Levenshtein") {
+					var stringDistance = levenshteinDistance(str1,str2);
+				}
+				else if(distanceFunction=="Damerau") {
+					var stringDistance = damerauLevenshteinDistance(str1, str2);
+				}
+				return stringDistance;
+			};
+
+			function keepAfterHash(str){
+				var index = str.indexOf("#");
+				return str.slice(index+1,str.length)
+
+			};
+
+			window.onload = function(){
+				inputFileParents = [];
+				distanceFunction = "Levenshtein";
+			};
+
+
+		</script>
+
+
+		<script>
+		//For ace editor
+	    	var editor = ace.edit("editor");
+	    	editor.setTheme("ace/theme/monokai");
+	   	 editor.session.setMode("ace/mode/sql");
+	   	
+
+	   	editor.commands.addCommand({
+    		name: 'increaseFont',
+    		bindKey: {win: 'Ctrl-=',  mac: 'Command-='},
+    		exec: function(editor) {
+    			console.log(editor.getFontSize());
+        		//document.getElementById('editor').style.fontSize=(editor.getFontSize()+2)+'px';
+        		editor.setFontSize((editor.getFontSize()+1));
+        		console.log(editor.getFontSize());
+    		}
+		});
+
+
+		editor.commands.addCommand({
+    		name: 'reduceFont',
+    		bindKey: {win: 'Ctrl--',  mac: 'Command--'},
+    		exec: function(editor) {
+    			console.log(editor.getFontSize());
+        		//document.getElementById('editor').style.fontSize=(editor.getFontSize()+2)+'px';
+        		if(editor.getFontSize()!=1){
+        			editor.setFontSize((editor.getFontSize()-1));
+        		}
+        		console.log(editor.getFontSize());
+    		}
+		});
+
+		editor.commands.addCommand({
+    		name: 'defaultFont',
+    		bindKey: {win: 'Ctrl-0',  mac: 'Command-0'},
+    		exec: function(editor) {
+    			console.log(editor.getFontSize());
+        		//document.getElementById('editor').style.fontSize=(editor.getFontSize()+2)+'px';
+        		
+        		editor.setFontSize(12);
+        		
+        		console.log(editor.getFontSize());
+    		}
+		});
+
+		</script>
+	</body>
+</html>
